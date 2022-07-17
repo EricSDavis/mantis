@@ -1,16 +1,17 @@
-import random
+from random import sample, choices, seed
+from collections import Counter
 
 
 class Card:
     def __init__(self, colorOptions):
-        self.backColors = random.sample(colorOptions, 3)
-        self.frontColor = random.sample(self.backColors, 1)[0]
+        self.backColors = sample(colorOptions, 3)
+        self.frontColor = sample(self.backColors, 1)[0]
 
     def showBack(self):
-        print(self.backColors)
+        print("The back colors are: " + ', '.join(self.backColors))
 
     def showFront(self):
-        print(self.frontColor)
+        print("The front color is: " + self.frontColor)
 
     def showBothSides(self):
         print("The back colors are: " + ', '.join(self.backColors))
@@ -20,7 +21,7 @@ class Card:
 class Player:
     def __init__(self, name, colorOptions):
         self.name = name
-        self.tank = dict.fromkeys(colorOptions, 0)
+        self.tank = Counter(choices(colorOptions, k=4))
         self.scorePile = dict.fromkeys(colorOptions, 0)
 
     @property
@@ -46,7 +47,6 @@ class Player:
             self.scorePile[color] += (self.tank[color] + 1)
             self.tank[color] = 0
             print(color + " is in tank! Moving cards to score pile...")
-        self.show()
 
     def steal(self, card, opponent):
         color = card.frontColor
@@ -63,57 +63,80 @@ class Player:
             print(("{o} doesn't have {c} in their tank. "
                   "Steal failed :( moving to {o}'s tank...")
                   .format(o=opponent.name, c=color, s=self.name))
-        self.show()
-        opponent.show()
 
 
 if __name__ == "__main__":
 
-    # Set seed for testing
-    random.seed(123)
-
     # Define all available color options
-    colorOptions = ['yellow', 'red', 'green',
-                    'purple', 'blue', 'orange', 'pink']
+    colorOptions = ['Yellow', 'Red', 'Green',
+                    'Purple', 'Blue', 'Orange', 'Pink']
 
-    # Create players
-    player1 = Player("Eric", colorOptions)
-    player1.greet()
-    player2 = Player("Amelia", colorOptions)
-    player2.greet()
+    # Configure the game ----------------------------------------
+    print("Lets set up the game!")
+    nPlayers = int(input("How many people will be playing? ") or 2)
     print()
 
-    # Simulate rounds for testing
-    for i in range(10):
-        # Draw a random card
-        print(player1.name + " draws a card...")
-        drawnCard = Card(colorOptions)
-        drawnCard.showBothSides()
+    players = {}
+    for n in range(nPlayers):
+        playerName = input("Name for player{n}: ".format(n=n+1))
+        players[playerName] = Player(playerName, colorOptions)
 
-        # Player1 chooses to score
-        print(player1.name + " chooses to score...")
-        player1.score(drawnCard)
-        # player1.show()
-        print()
+    print()
+    for playerName, player in players.items():
+        player.greet()
 
-        # Draw a random card
-        print(player2.name + " draws a card...")
-        drawnCard = Card(colorOptions)
-        drawnCard.showBothSides()
+    print()
+    winningScore = int(
+        input("Set the number of points required to win (we suggest 10): ") or 10)
 
-        # Player2 chooses to score
-        print(player2.name + " chooses to score...")
-        player2.score(drawnCard)
-        # player2.show()
-        print()
+    # Begin gameplay ---------------------------------------------
+    round = 1
+    currentLeadingPlayer = ""
+    currentLeadingScore = 0
+    while currentLeadingScore < winningScore:
 
-        # Draw a random card
-        print(player1.name + " draws a card...")
-        drawnCard = Card(colorOptions)
-        drawnCard.showBothSides()
+        # Define a round of gameplay
 
-        # Player1 chooses to steal
-        print(player1.name + " chooses to steal...")
-        player1.steal(drawnCard, player2)
-        # player1.show()
-        print()
+        for playerName, player in players.items():
+
+            print("\nCurrent Standings (Round {round}):".format(round=round))
+            for pn, p in players.items():
+                p.show()
+                print()
+            print()
+
+            # Draw a random card
+            print(player.name + " drew a card...")
+            drawnCard = Card(colorOptions)
+            drawnCard.showBack()
+
+            # Decide to try and score or steal
+            choice = input("Would you like to score or steal? ").upper()
+            while choice not in ['SCORE', 'STEAL']:
+                choice = input("Would you like to score or steal? ").upper()
+
+            if choice == 'SCORE':
+                drawnCard.showFront()
+                player.score(drawnCard)
+
+            if choice == 'STEAL':
+                opponents = [pn for pn, p in players.items()]
+                opponents.remove(player.name)
+                opponent = input("From who? ")
+                while opponent not in opponents:
+                    opponent = input("From who? ")
+
+                drawnCard.showFront()
+                player.steal(drawnCard, players[opponent])
+
+            # Check for a winner
+            if player.scoreTotal > currentLeadingScore:
+                currentLeadingPlayer = player.name
+                currentLeadingScore = player.scoreTotal
+            if currentLeadingScore >= winningScore:
+                break
+
+        # Increment the round
+        round += 1
+
+    print("Congratulations, " + currentLeadingPlayer + ", you win!")
