@@ -1,5 +1,19 @@
-from random import sample, choices, seed
+from random import sample, choices, uniform
 from collections import Counter
+from time import sleep
+
+
+def typedPrint(words, newLine=True):
+    for char in words:
+        sleep(uniform(0, 0.08))
+        print(char, end='', flush=True)
+    if newLine:
+        print()
+
+
+def typedInput(words, default=None):
+    typedPrint(words, newLine=False)
+    return (input() or default)
 
 
 class Card:
@@ -8,10 +22,10 @@ class Card:
         self.frontColor = sample(self.backColors, 1)[0]
 
     def showBack(self):
-        print("The back colors are: " + ', '.join(self.backColors))
+        typedPrint("The back colors are: " + ', '.join(self.backColors))
 
     def showFront(self):
-        print("The front color is: " + self.frontColor)
+        typedPrint("The front color is: " + self.frontColor)
 
     def showBothSides(self):
         print("The back colors are: " + ', '.join(self.backColors))
@@ -29,7 +43,7 @@ class Player:
         return sum(self.scorePile.values())
 
     def greet(self):
-        print("Welcome, " + self.name + "!")
+        typedPrint("Welcome, " + self.name + "!")
 
     def show(self):
         print(self.name + ":")
@@ -42,11 +56,11 @@ class Player:
         color = card.frontColor
         if self.tank[color] == 0:
             self.tank[color] += 1
-            print(color + " is not in tank, adding it...")
+            typedPrint(color + " is not in tank, adding it...")
         else:
             self.scorePile[color] += (self.tank[color] + 1)
             self.tank[color] = 0
-            print(color + " is in tank! Moving cards to score pile...")
+            typedPrint(color + " is in tank! Moving cards to score pile...")
 
     def steal(self, card, opponent):
         color = card.frontColor
@@ -55,14 +69,14 @@ class Player:
         if color in opponentTankColors:
             self.tank[color] += (opponent.tank[color] + 1)
             opponent.tank[color] = 0
-            print(("{o} has {c} in their tank. "
-                  "Steal successful :) moving to {s}'s tank...")
-                  .format(o=opponent.name, c=color, s=self.name))
+            typedPrint(("{o} has {c} in their tank. "
+                        "Steal successful :) moving to {s}'s tank...")
+                       .format(o=opponent.name, c=color, s=self.name))
         else:
             opponent.tank[color] = 1
-            print(("{o} doesn't have {c} in their tank. "
-                  "Steal failed :( moving to {o}'s tank...")
-                  .format(o=opponent.name, c=color, s=self.name))
+            typedPrint(("{o} doesn't have {c} in their tank. "
+                        "Steal failed :( moving to {o}'s tank...")
+                       .format(o=opponent.name, c=color, s=self.name))
 
 
 if __name__ == "__main__":
@@ -72,8 +86,8 @@ if __name__ == "__main__":
                     'Purple', 'Blue', 'Orange', 'Pink']
 
     # Configure the game ----------------------------------------
-    print("Lets set up the game!")
-    nPlayers = int(input("How many people will be playing? ") or 2)
+    typedPrint("Lets set up the game!")
+    nPlayers = int(typedInput("How many people will be playing? ", 2))
     print()
 
     players = {}
@@ -87,16 +101,16 @@ if __name__ == "__main__":
 
     print()
     winningScore = int(
-        input("Set the number of points required to win (we suggest 10): ") or 10)
+        typedInput("Set the number of points required to win (we suggest 10): ", 10))
 
     # Begin gameplay ---------------------------------------------
+    typedPrint("Let's deal the first hand...")
     round = 1
     currentLeadingPlayer = ""
     currentLeadingScore = 0
     while currentLeadingScore < winningScore:
 
         # Define a round of gameplay
-
         for playerName, player in players.items():
 
             print("\nCurrent Standings (Round {round}):".format(round=round))
@@ -104,9 +118,11 @@ if __name__ == "__main__":
                 p.show()
                 print()
             print()
+            sleep(0.2)
 
             # Draw a random card
-            print(player.name + " drew a card...")
+            typedInput(player.name + ", press Enter to draw a card...")
+            typedPrint(player.name + " drew a card...")
             drawnCard = Card(colorOptions)
             drawnCard.showBack()
 
@@ -128,6 +144,8 @@ if __name__ == "__main__":
 
                 drawnCard.showFront()
                 player.steal(drawnCard, players[opponent])
+
+            sleep(0.2)
 
             # Check for a winner
             if player.scoreTotal > currentLeadingScore:
