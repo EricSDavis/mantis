@@ -2,6 +2,8 @@ from random import sample, choices, uniform
 from collections import Counter
 from time import sleep
 
+# Functions for mimicking human typing
+
 
 def typedPrint(words, newLine=True):
     for char in words:
@@ -16,16 +18,44 @@ def typedInput(words, default=None):
     return (input() or default)
 
 
+# Functions for colorizing strings, lists, and dictionaries
+def color(text, color):
+    END = '\033[1;37;0m'
+    if color == "Yellow":
+        return str('\033[1;93;48m' + text + END)
+    if color == "Red":
+        return str('\033[1;31;48m' + text + END)
+    if color == "Green":
+        return str('\033[1;32;48m' + text + END)
+    if color == "Purple":
+        return str('\033[38;5;93m' + text + END)
+    if color == "Blue":
+        return str('\033[1;34;48m' + text + END)
+    if color == "Orange":
+        return str('\033[38;5;208m' + text + END)
+    if color == "Pink":
+        return str('\033[38;5;219m' + text + END)
+
+
+def colorDict(d):
+    return ", ".join([color(k + ": " + str(v), k) for k, v in d.items() if v > 0])
+
+
+def colorList(l):
+    return ", ".join([color(v, v) for v in l])
+
+
 class Card:
     def __init__(self, colorOptions):
         self.backColors = sample(colorOptions, 3)
         self.frontColor = sample(self.backColors, 1)[0]
 
     def showBack(self):
-        typedPrint("The back colors are: " + ', '.join(self.backColors))
+        typedPrint("The back colors are: " + colorList(self.backColors))
 
     def showFront(self):
-        typedPrint("The front color is: " + self.frontColor)
+        front = self.frontColor
+        typedPrint("The front color is: " + color(front, front))
 
     def showBothSides(self):
         print("The back colors are: " + ', '.join(self.backColors))
@@ -47,9 +77,8 @@ class Player:
 
     def show(self):
         print(self.name + ":")
-        print(" tank: " + str({k: v for k, v in self.tank.items() if v > 0}))
-        print(" scorePile: " +
-              str({k: v for k, v in self.scorePile.items() if v > 0}))
+        print(" tank: " + colorDict(self.tank))
+        print(" scorePile: " + colorDict(self.scorePile))
         print(" scoreTotal: " + str(self.scoreTotal))
 
     def score(self, card):
