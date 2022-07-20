@@ -171,7 +171,7 @@ if __name__ == "__main__":
                 opponents = [pn for pn, p in players.items()]
                 opponents.remove(player.name)
                 if len(opponents) == 1:
-                    opponent = opponent
+                    opponent = opponents[0]
                 else:
                     opponent = input("From who? ")
                     while opponent not in opponents:
