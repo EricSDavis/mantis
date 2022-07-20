@@ -118,7 +118,7 @@ if __name__ == "__main__":
     typedPrint("Lets set up the game!")
     nPlayers = int(typedInput("How many people will be playing? ", 2))
     while nPlayers < 2:
-        print("\nSorry, you need at least 2 people to play the game.")
+        print("Sorry, you need at least 2 people to play the game.\n")
         nPlayers = int(typedInput("How many people will be playing? ", 2))
     print()
 
