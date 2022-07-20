@@ -170,9 +170,12 @@ if __name__ == "__main__":
             if choice == 'STEAL':
                 opponents = [pn for pn, p in players.items()]
                 opponents.remove(player.name)
-                opponent = input("From who? ")
-                while opponent not in opponents:
+                if len(opponents) == 1:
+                    opponent = opponent
+                else:
                     opponent = input("From who? ")
+                    while opponent not in opponents:
+                        opponent = input("From who? ")
 
                 drawnCard.showFront()
                 player.steal(drawnCard, players[opponent])
