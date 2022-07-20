@@ -117,6 +117,9 @@ if __name__ == "__main__":
     # Configure the game ----------------------------------------
     typedPrint("Lets set up the game!")
     nPlayers = int(typedInput("How many people will be playing? ", 2))
+    while nPlayers < 2:
+        print("Sorry, you need at least 2 people to play the game.\n")
+        nPlayers = int(typedInput("How many people will be playing? ", 2))
     print()
 
     players = {}
@@ -167,9 +170,12 @@ if __name__ == "__main__":
             if choice == 'STEAL':
                 opponents = [pn for pn, p in players.items()]
                 opponents.remove(player.name)
-                opponent = input("From who? ")
-                while opponent not in opponents:
+                if len(opponents) == 1:
+                    opponent = opponents[0]
+                else:
                     opponent = input("From who? ")
+                    while opponent not in opponents:
+                        opponent = input("From who? ")
 
                 drawnCard.showFront()
                 player.steal(drawnCard, players[opponent])
