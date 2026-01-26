@@ -1,11 +1,10 @@
 from random import sample, choices, uniform
 from collections import Counter
 from time import sleep
+from typing import Literal
 
 # Functions for mimicking human typing
-
-
-def typedPrint(words, newLine=True):
+def typedPrint(words: str, newLine=True) -> None:
     for char in words:
         sleep(uniform(0, 0.08))
         print(char, end='', flush=True)
@@ -13,13 +12,13 @@ def typedPrint(words, newLine=True):
         print()
 
 
-def typedInput(words, default=None):
+def typedInput(words: str, default=None) -> str:
     typedPrint(words, newLine=False)
     return (input() or default)
 
 
 # Functions for colorizing strings, lists, and dictionaries
-def color(text, color):
+def color(text: str, color: Literal["Yellow", "Red", "Green", "Purple", "Blue", "Orange", "Pink"]) -> str:
     END = '\033[1;37;0m'
     if color == "Yellow":
         return str('\033[1;93;48m' + text + END)
@@ -37,27 +36,27 @@ def color(text, color):
         return str('\033[38;5;219m' + text + END)
 
 
-def colorDict(d):
+def colorDict(d: dict) -> str:
     return ", ".join([color(k + ": " + str(v), k) for k, v in d.items() if v > 0])
 
 
-def colorList(l):
+def colorList(l: list[str]) -> str:
     return ", ".join([color(v, v) for v in l])
 
 
 class Card:
-    def __init__(self, colorOptions):
+    def __init__(self, colorOptions: list[str]) -> None:
         self.backColors = sample(colorOptions, 3)
         self.frontColor = sample(self.backColors, 1)[0]
 
-    def showBack(self):
+    def showBack(self) -> None:
         typedPrint("The back colors are: " + colorList(self.backColors))
 
-    def showFront(self):
+    def showFront(self) -> None:
         front = self.frontColor
         typedPrint("The front color is: " + color(front, front))
 
-    def showBothSides(self):
+    def showBothSides(self) -> None:
         print("The back colors are: " + ', '.join(self.backColors))
         print("The front color is: " + self.frontColor)
 
@@ -69,19 +68,22 @@ class Player:
         self.scorePile = dict.fromkeys(colorOptions, 0)
 
     @property
-    def scoreTotal(self):
+    def scoreTotal(self) -> int:
         return sum(self.scorePile.values())
 
-    def greet(self):
+    def greet(self) -> None:
         typedPrint("Welcome, " + self.name + "!")
 
-    def show(self):
+    def show(self) -> None:
         print(self.name + ":")
         print(" tank: " + colorDict(self.tank))
         print(" scorePile: " + colorDict(self.scorePile))
         print(" scoreTotal: " + str(self.scoreTotal))
 
-    def score(self, card):
+    def tankColors(self) -> list[str]:
+        return [k for k, v in self.tank.items() if v > 0]
+
+    def score(self, card: Card) -> None:
         color = card.frontColor
         if self.tank[color] == 0:
             self.tank[color] += 1
@@ -91,10 +93,9 @@ class Player:
             self.tank[color] = 0
             typedPrint(color + " is in tank! Moving cards to score pile...")
 
-    def steal(self, card, opponent):
+    def steal(self, card: Card, opponent: "Player") -> None:
         color = card.frontColor
-        opponentTankColors = [
-            k for k, v in opponent.tank.items() if v > 0]
+        opponentTankColors = opponent.tankColors()
         if color in opponentTankColors:
             self.tank[color] += (opponent.tank[color] + 1)
             opponent.tank[color] = 0
