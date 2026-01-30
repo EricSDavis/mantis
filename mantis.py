@@ -1,3 +1,4 @@
+import random
 from random import sample, choices, uniform
 from collections import Counter
 from time import sleep
@@ -107,6 +108,31 @@ class Player:
             typedPrint(("{o} doesn't have {c} in their tank. "
                         "Steal failed :( moving to {o}'s tank...")
                        .format(o=opponent.name, c=color, s=self.name))
+            
+class NPC(Player):
+    def __init__(self, name, colorOptions):
+        super().__init__(name, colorOptions)
+
+    def scoreOrSteal(self, card: Card, opponents=dict[Player]) -> Literal['SCORE', 'STEAL']:
+        card_colors = set(card.backColors)
+        my_tank_colors = set(self.tankColors())
+        max_score_count = len(card_colors.intersection(my_tank_colors))
+        
+        steal_counts = []
+        for on, o in opponents.items():
+            opp_tank_colors = set(o.tankColors())
+            steal_counts.append(len(card_colors.intersection(opp_tank_colors)))
+        max_steal_count = max(steal_counts)
+        
+        return 'SCORE' if max_score_count >= max_steal_count else 'STEAL'
+    
+    def chooseOpponent(self, card: Card, opponents: dict[Player]) -> str:
+        card_colors = set(card.backColors)
+        steal_counts = {}
+        for on, o in opponents.items():
+            opp_tank_colors = set(o.tankColors())
+            steal_counts[on] = len(card_colors.intersection(opp_tank_colors))
+        return random.choice([k for k, v in steal_counts.items() if v == max(steal_counts.values())])
 
 
 if __name__ == "__main__":
@@ -117,20 +143,32 @@ if __name__ == "__main__":
 
     # Configure the game ----------------------------------------
     typedPrint("Lets set up the game!")
-    nPlayers = int(typedInput("How many people will be playing? ", 2))
-    while nPlayers < 2:
-        print("Sorry, you need at least 2 people to play the game.\n")
-        nPlayers = int(typedInput("How many people will be playing? ", 2))
+    nPlayers = int(typedInput("How many real people will be playing? ", 2))
+    nNpcs = int(typedInput("How many NPCs will be playing? ", 2))
+    while nPlayers < 1:
+        typedPrint("There must be at least 1 real player.")
+        nPlayers = int(typedInput("How many real people will be playing? ", 2))
+    if nPlayers < 2 and nNpcs < 1:
+        typedPrint("You need at least one NPC to play by yourself.\n")
+        typedPrint("Adding an NPC")
+        nNpcs = 1
     print()
 
-    players = {}
+    real_players = {}
     for n in range(nPlayers):
-        playerName = input("Name for player{n}: ".format(n=n+1))
-        players[playerName] = Player(playerName, colorOptions)
+        playerName = input(f"Name for player{n+1}: ")
+        real_players[playerName] = Player(playerName, colorOptions)
+
+    npcs = {}
+    for n in range(nNpcs):
+        npcName = input(f"Name for NPC{n+1} (default: NPC{n+1}): ") or f"NPC{n+1}"
+        npcs[npcName] = NPC(npcName, colorOptions)
+    
+    players = {**real_players, **npcs}
 
     print()
     for playerName, player in players.items():
-        player.greet()
+        player.greet() 
 
     print()
     winningScore = int(
@@ -154,32 +192,52 @@ if __name__ == "__main__":
             sleep(0.2)
 
             # Draw a random card
-            typedInput(player.name + ", press Enter to draw a card...")
+            if type(player) == Player:    
+                typedInput(player.name + ", press Enter to draw a card...")
             typedPrint(player.name + " drew a card...")
             drawnCard = Card(colorOptions)
             drawnCard.showBack()
 
-            # Decide to try and score or steal
-            choice = input("Would you like to score or steal? ").upper()
-            while choice not in ['SCORE', 'STEAL']:
-                choice = input("Would you like to score or steal? ").upper()
+            # List opponents
+            opponents = {pn: p for pn, p in players.items() if pn != playerName}
+            opponentNames = [pn for pn, p in opponents.items()]
 
-            if choice == 'SCORE':
-                drawnCard.showFront()
-                player.score(drawnCard)
+            # Decide to try and score or steal (NPC)
+            if type(player) == NPC:
+                choice = player.scoreOrSteal(card=drawnCard, opponents=opponents)
 
-            if choice == 'STEAL':
-                opponents = [pn for pn, p in players.items()]
-                opponents.remove(player.name)
-                if len(opponents) == 1:
-                    opponent = opponents[0]
+                ## Choose opponent
+                if choice == 'STEAL':
+                    opponent = player.chooseOpponent(card=drawnCard, opponents=opponents)
+                    typedPrint(f"{player.name} chose to {choice.lower()} from {opponent}")
+                
                 else:
-                    opponent = input("From who? ")
-                    while opponent not in opponents:
-                        opponent = input("From who? ")
+                    typedPrint(f"{player.name} chose to {choice.lower()}")
 
-                drawnCard.showFront()
-                player.steal(drawnCard, players[opponent])
+            # Decide to try and score or steal (Player)
+            if type(player) == Player:  
+                choice = input("Would you like to score or steal? ").upper()
+                while choice not in ['SCORE', 'STEAL']:
+                    choice = input("Would you like to score or steal? ").upper()       
+
+                ## Choose opponent
+                if choice == 'STEAL':
+                    if len(opponents) == 1:
+                        opponent = opponentNames[0]
+                    else:
+                        opponent = input("From who? ")
+                        while opponent not in opponents:
+                            opponent = input("From who? ")     
+            
+            # Show card
+            drawnCard.showFront()
+
+            # Perform score or steal
+            match choice:
+                case 'SCORE':
+                    player.score(drawnCard)
+                case 'STEAL':
+                    player.steal(drawnCard, players[opponent])
 
             sleep(0.2)
 
